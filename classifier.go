@@ -82,13 +82,13 @@ type NestedPathTokenClassifier struct {
 
 func (n NestedPathTokenClassifier) Check(s string) (Label, string) {
 	label, match := n.Parent.Check(s)
-	if label.IsZero() {
+	if label.isZero() {
 		return Label{}, ""
 	}
 
 	for _, child := range n.Children {
 		childLabel, _ := child.Check(match)
-		if !childLabel.IsZero() {
+		if !childLabel.isZero() {
 			return Label{
 				Parent: label.Fields,
 				Fields: childLabel.Fields,
@@ -212,7 +212,7 @@ func (l Label) parentOrSelf() LabelFields {
 	return l.Fields
 }
 
-func (l Label) IsZero() bool {
+func (l Label) isZero() bool {
 	return l.Fields.Value == ""
 }
 
@@ -255,7 +255,7 @@ func labelPathTokens(path string, classifiers []PathTokenClassifier) []pathToken
 
 func labelPathToken(path string, classifiers []PathTokenClassifier) (Label, string) {
 	for _, classifier := range classifiers {
-		if label, match := classifier.Check(path); !label.IsZero() {
+		if label, match := classifier.Check(path); !label.isZero() {
 			return label, match
 		}
 	}
