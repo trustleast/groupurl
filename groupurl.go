@@ -182,14 +182,14 @@ func (t urlTree) add(tokens []pathToken) {
 		parent := token.label.parentOrSelf()
 		child, ok := current.children[parent]
 		if !ok {
-			child = newURLNode(token.label.Fields)
+			child = newURLNode(token.label.LabelFields)
 			current.children[parent] = child
 		}
 
 		// If we've found a child with a different label than the current token, we should mark it as a parent
 		// so they are grouped together. At this point we also need to update our counters to reflect the new
 		// labeling.
-		if child.specificLabel.Value != token.label.Fields.Value {
+		if child.specificLabel.Value != token.label.LabelFields.Value {
 			child.specificLabel = parent
 			child.tokenCounts.limit = parent.CardinalityLimit
 		}

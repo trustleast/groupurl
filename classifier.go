@@ -20,10 +20,48 @@ var (
 
 const _yyyyStart = 1900
 
+// Labels are a wrapper that Classifiers return to indicate how a path should be treated.
+// This wrapper exists to allow the `NestedPathTokenClassifier` to specify a parent label.
+// Custom implementations of Classifiers only need to specify `LabelFields`.
+type Label struct {
+	LabelFields
+	parent LabelFields
+}
+
+func (l Label) parentOrSelf() LabelFields {
+	if l.parent.Value != "" {
+		return l.parent
+	}
+	return l.LabelFields
+}
+
+func (l Label) isZero() bool {
+	return l.Value == ""
+}
+
+// LabelFields indicates how a label should be treated by the Grouper.
+// Important implies that all fields should be preserved exactly and not grouped under a generic label.
+// CardinalityLimit tells the grouper to record fields up to a certain limit, and then group the rest under a generic label.
+// Value is the name of the label.
+type LabelFields struct {
+	Important        bool
+	CardinalityLimit int
+	Value            string
+}
+
+func (l LabelFields) cardinalityLimit() int {
+	if l.CardinalityLimit == 0 && !l.Important {
+		return -1
+	}
+	return l.CardinalityLimit
+}
+
 // PathTokenClassifier is an interface that defines a method to check if a prefix of a path matches a label.
 // The prefix of the path the classifier matches should be returned along with the label.
 // If there is no match, it is fine to return an empty Label{}.
 // The match string is used to tell the Grouper how much of the path should be consumed by the classifier.
+// It is suggested that a classifier consumes up the next '/' in the path or the rest of the path.
+// You can look at regular expressions in classifier.go for examples of how this is done in regular expressions.
 type PathTokenClassifier interface {
 	Check(path string) (label Label, match string)
 }
@@ -61,7 +99,7 @@ func (y YearPathTokenClassifier) Check(s string) (Label, string) {
 	}
 	if num >= y.Start && num <= y.End {
 		return Label{
-			Fields: LabelFields{
+			LabelFields: LabelFields{
 				Important: false,
 				Value:     "YYYY",
 			},
@@ -90,8 +128,8 @@ func (n NestedPathTokenClassifier) Check(s string) (Label, string) {
 		childLabel, _ := child.Check(match)
 		if !childLabel.isZero() {
 			return Label{
-				Parent: label.Fields,
-				Fields: childLabel.Fields,
+				parent:      label.LabelFields,
+				LabelFields: childLabel.LabelFields,
 			}, match
 		}
 	}
@@ -104,7 +142,7 @@ func YYYYMMDDClassifier() RegexPathTokenClassifier {
 	return RegexPathTokenClassifier{
 		Regex: regexYYYYMMDD,
 		Label: Label{
-			Fields: LabelFields{
+			LabelFields: LabelFields{
 				Important: false,
 				Value:     "YYYY/MM/DD",
 			},
@@ -117,7 +155,7 @@ func AlphaNumericClassifier() RegexPathTokenClassifier {
 	return RegexPathTokenClassifier{
 		Regex: regexAlphaNumeric,
 		Label: Label{
-			Fields: LabelFields{
+			LabelFields: LabelFields{
 				Important: true,
 				Value:     "AlphaNumeric",
 			},
@@ -130,7 +168,7 @@ func NumberClassifier() RegexPathTokenClassifier {
 	return RegexPathTokenClassifier{
 		Regex: regexNumbers,
 		Label: Label{
-			Fields: LabelFields{
+			LabelFields: LabelFields{
 				Important: false,
 				Value:     "Number",
 			},
@@ -143,7 +181,7 @@ func WordsClassifier() RegexPathTokenClassifier {
 	return RegexPathTokenClassifier{
 		Regex: regexWords,
 		Label: Label{
-			Fields: LabelFields{
+			LabelFields: LabelFields{
 				Important:        true,
 				CardinalityLimit: 50,
 				Value:            "Words",
@@ -157,7 +195,7 @@ func LettersClassifier() RegexPathTokenClassifier {
 	return RegexPathTokenClassifier{
 		Regex: regexAlpha,
 		Label: Label{
-			Fields: LabelFields{
+			LabelFields: LabelFields{
 				Important: true,
 				Value:     "Letters",
 			},
@@ -181,39 +219,6 @@ func DefaultClassifiers() []PathTokenClassifier {
 			},
 		},
 	}
-}
-
-// LabelFields indicates how a label should be treated by the Grouper.
-// Important implies that all fields should be preserved exactly and not grouped under a generic label.
-// CardinalityLimit tells the grouper to record fields up to a certain limit, and then group the rest under a generic label.
-// Value is the name of the label.
-type LabelFields struct {
-	Important        bool
-	CardinalityLimit int
-	Value            string
-}
-
-func (l LabelFields) cardinalityLimit() int {
-	if l.CardinalityLimit == 0 && !l.Important {
-		return -1
-	}
-	return l.CardinalityLimit
-}
-
-type Label struct {
-	Fields LabelFields
-	Parent LabelFields
-}
-
-func (l Label) parentOrSelf() LabelFields {
-	if l.Parent.Value != "" {
-		return l.Parent
-	}
-	return l.Fields
-}
-
-func (l Label) isZero() bool {
-	return l.Fields.Value == ""
 }
 
 type pathToken struct {
@@ -240,7 +245,7 @@ func labelPathTokens(path string, classifiers []PathTokenClassifier) []pathToken
 			cleaned = append(cleaned, pathToken{
 				token: path,
 				label: Label{
-					Fields: LabelFields{
+					LabelFields: LabelFields{
 						Important: false,
 						Value:     "Unknown",
 					},
@@ -260,7 +265,7 @@ func labelPathToken(path string, classifiers []PathTokenClassifier) (Label, stri
 		}
 	}
 	return Label{
-		Fields: LabelFields{
+		LabelFields: LabelFields{
 			Important: false,
 			Value:     "Unknown",
 		},
