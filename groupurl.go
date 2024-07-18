@@ -8,6 +8,12 @@ import (
 )
 
 type (
+	// Grouper is a struct that groups URLs based on their path components.
+	// It is not safe for concurrent use.
+	// It can only keep track of a single host at a time so callers are encouraged to create a new Grouper per host.
+	// The memory utilization of the Grouper is proportional to the number of unique paths it has seen.
+	// However, it is possible to bound this memory by using Classifiers that emit labels marked as not `Important`,
+	// or with `CardinalityLimit` set.
 	Grouper struct {
 		classifiers []PathTokenClassifier
 		trees       map[int]urlTree
