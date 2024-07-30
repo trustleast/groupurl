@@ -24,8 +24,8 @@ func TestFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	path := g.SimplifyPath(u)
-	if path != "/thesaurus/Words/index.html" {
-		t.Fatalf("expected /thesaurus/Words/index.html, got %s", path)
+	if path != "/thesaurus/Words/AlphaNumeric" {
+		t.Fatalf("expected /thesaurus/Words/AlphaNumeric, got %s", path)
 	}
 
 	u, err = url.Parse("https://example.com/random/PMFKQYGHBQWKZYBETZFWMWBTCBCCXJ")
