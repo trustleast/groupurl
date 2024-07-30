@@ -9,7 +9,7 @@ import (
 
 var (
 	regexYYYY         = regexp.MustCompile(`^\d{4}(/|$)`)
-	regexWords        = regexp.MustCompile(`^([a-zA-Z0-9]+-?){1,}(/|$)`)
+	regexWords        = regexp.MustCompile(`^([a-zA-Z0-9]+[-_]?){1,}(/|$)`)
 	regexYYYYMMDD     = regexp.MustCompile(`^\d{4}/((0[1-9])|(1[0-2]))/((0[1-9])|([1-2][0-9])|(3[01]))(/|$)`)
 	regexNumbers      = regexp.MustCompile(`^\d+(/|$)`)
 	regexAlpha        = regexp.MustCompile(`^[a-zA-Z]+(/|$)`)
@@ -156,7 +156,7 @@ func AlphaNumericClassifier() RegexPathTokenClassifier {
 		Regex: regexAlphaNumeric,
 		Label: Label{
 			LabelFields: LabelFields{
-				Important: true,
+				Important: false,
 				Value:     "AlphaNumeric",
 			},
 		},
@@ -196,8 +196,9 @@ func LettersClassifier() RegexPathTokenClassifier {
 		Regex: regexAlpha,
 		Label: Label{
 			LabelFields: LabelFields{
-				Important: true,
-				Value:     "Letters",
+				Important:        true,
+				CardinalityLimit: 50,
+				Value:            "Letters",
 			},
 		},
 	}

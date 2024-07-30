@@ -141,6 +141,30 @@ func TestCaseInsensitiveStringCounter(t *testing.T) {
 		t.Fatalf("expected 0, got %d", c.get("test4"))
 	}
 	if c.get("cardinality") != 2 {
-		t.Fatalf("expected 2, got %d", c.get("cardinality"))
+		t.Fatalf("expected 2, got %d", c.get(_cardinalityLabel))
+	}
+}
+
+func TestSignificance(t *testing.T) {
+	c := newCaseInsensitiveStringCounter(3)
+
+	c.add("test1")
+	c.add("test2")
+
+	if c.isSignificant("test1") {
+		t.Fatal("expected test1 to not be significant")
+	}
+	for i := 0; i < 10000; i++ {
+		c.add("test1")
+	}
+	if !c.isSignificant("test1") {
+		t.Fatal("expected test1 to be significant")
+	}
+
+	c.add("test3")
+
+	// Verify no tags are significant after cardinality reached
+	if c.isSignificant("test1") {
+		t.Fatal("expected test1 to not be significant after cardinality limit reached")
 	}
 }
