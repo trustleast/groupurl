@@ -22,6 +22,11 @@ type (
 	Option func(*Grouper) error
 )
 
+const (
+	_cardinalityLabel      = "cardinality"
+	_significanceThreshold = 0.01
+)
+
 // WithClassifiers sets the classifiers to be used by the Grouper.
 // If not specified, `DefaultClassifiers` will be used instead.
 func WithClassifiers(classifiers []PathTokenClassifier) Option {
@@ -99,7 +104,7 @@ func (c *caseInsensitiveStringCounter) add(s string) {
 	if _, ok := c.tokenCounts[key]; ok || c.limit == 0 || len(c.tokenCounts) < c.limit {
 		c.tokenCounts[key]++
 	} else {
-		c.tokenCounts["cardinality"]++
+		c.tokenCounts[_cardinalityLabel]++
 	}
 	c.total++
 }
@@ -113,10 +118,10 @@ func (c caseInsensitiveStringCounter) get(s string) int {
 }
 
 func (c caseInsensitiveStringCounter) isSignificant(s string) bool {
-	averageSizePerToken := float64(c.population()) / float64(c.total)
-	tokenPerPopulation := float64(c.get(s)) / float64(c.total)
-	return (len(c.tokenCounts) < c.limit || c.limit == 0) && (averageSizePerToken < 0.01 ||
-		tokenPerPopulation > averageSizePerToken)
+	averageCountPerToken := float64(c.population()) / float64(c.total)
+	tokenShareOfCounts := float64(c.get(s)) / float64(c.total)
+	return (len(c.tokenCounts) < c.limit || c.limit == 0) && (averageCountPerToken < _significanceThreshold ||
+		tokenShareOfCounts > averageCountPerToken)
 }
 
 func (c caseInsensitiveStringCounter) topN(n int) []string {
