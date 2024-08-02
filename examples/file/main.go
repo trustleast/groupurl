@@ -31,7 +31,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	g.Print()
+	fmt.Println(g)
 
 	for _, rawURL := range os.Args[2:] {
 		u, err := url.Parse(rawURL)
