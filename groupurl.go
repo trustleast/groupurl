@@ -69,11 +69,13 @@ func (g Grouper) SimplifyPath(u *url.URL) string {
 	return "/" + strings.Join(replaced, "/")
 }
 
-// Print prints the internal trees to stdout to imply a nesting structure.
-func (g Grouper) Print() {
+// String pretty prints the internal trees to stdout to imply a nesting structure.
+func (g Grouper) String() string {
+	sb := strings.Builder{}
 	for _, t := range g.trees {
-		t.print()
+		sb.WriteString(t.String())
 	}
+	return sb.String()
 }
 
 func (g Grouper) getTree(u *url.URL) urlTree {
@@ -161,22 +163,24 @@ func newURLTree() urlTree {
 	}
 }
 
-func (t urlTree) print() {
-	t.printNode(t.Root, 0)
+func (t urlTree) String() string {
+	sb := &strings.Builder{}
+	t.string(t.Root, sb, 0)
+	return sb.String()
 }
 
-func (t urlTree) printNode(node *urlNode, depth int) {
+func (t urlTree) string(node *urlNode, sb *strings.Builder, depth int) {
 	for _, child := range node.children {
 		indent := strings.Repeat("  ", depth)
 
 		tokens := filterSlice(child.tokenCounts.topN(20), child.tokenCounts.isSignificant)
 		if len(tokens) > 0 && child.specificLabel.Important {
-			fmt.Printf("%s/%s: %v(%d)\n", indent, child.specificLabel.Value, tokens, child.tokenCounts.total)
+			sb.WriteString(fmt.Sprintf("%s/%s: %v(%d)\n", indent, child.specificLabel.Value, tokens, child.tokenCounts.total))
 		} else {
-			fmt.Printf("%s/%s: (%d)\n", indent, child.specificLabel.Value, child.tokenCounts.total)
+			sb.WriteString(fmt.Sprintf("%s/%s: (%d)\n", indent, child.specificLabel.Value, child.tokenCounts.total))
 		}
 
-		t.printNode(child, depth+1)
+		t.string(child, sb, depth+1)
 	}
 }
 

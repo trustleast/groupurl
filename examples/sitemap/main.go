@@ -41,7 +41,7 @@ func main() {
 		g.Add(u)
 	}
 
-	g.Print()
+	fmt.Println(g)
 
 	for i := 0; i < 10 && i < len(urls); i++ {
 		n := rand.Int() % len(urls)
